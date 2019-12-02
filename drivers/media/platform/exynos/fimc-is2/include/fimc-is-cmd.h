@@ -162,11 +162,16 @@ enum is_subscenario_id {
 
 #define IS_VIDEO_SCENARIO(setfile)				\
 	(((setfile) == ISS_SUB_SCENARIO_VIDEO)			\
-	|| ((setfile) == ISS_SUB_SCENARIO_FHD_60FPS)		\
-	|| ((setfile) == ISS_SUB_SCENARIO_UHD_30FPS)		\
-	|| ((setfile) == ISS_SUB_SCENARIO_WVGA_300FPS)		\
-	|| ((setfile) == ISS_SUB_SCENARIO_VIDEO_WDR_ON)		\
 	|| ((setfile) == ISS_SUB_SCENARIO_VIDEO_WDR_AUTO)	\
+	|| ((setfile) == ISS_SUB_SCENARIO_VIDEO_WDR_ON)		\
+	|| ((setfile) == ISS_SUB_SCENARIO_FHD_60FPS)		\
+	|| ((setfile) == ISS_SUB_SCENARIO_FHD_60FPS_WDR_AUTO)	\
+	|| ((setfile) == ISS_SUB_SCENARIO_UHD_30FPS)		\
+	|| ((setfile) == ISS_SUB_SCENARIO_UHD_30FPS_WDR_AUTO)	\
+	|| ((setfile) == ISS_SUB_SCENARIO_UHD_30FPS_WDR_ON)	\
+	|| ((setfile) == ISS_SUB_SCENARIO_UHD_60FPS)		\
+	|| ((setfile) == ISS_SUB_SCENARIO_UHD_60FPS_WDR_AUTO)	\
+	|| ((setfile) == ISS_SUB_SCENARIO_WVGA_300FPS)		\
 	|| ((setfile) == ISS_SUB_SCENARIO_FRONT_C2_OFF_VIDEO)	\
 	|| ((setfile) == ISS_SUB_SCENARIO_FHD_240FPS))
 
@@ -177,6 +182,7 @@ enum is_scenario_is {
 	FIMC_IS_SCENARIO_FULL_SIZE = 4,
 	FIMC_IS_SCENARIO_HIGH_SPEED_DUALFPS = 5, /* FPS is changed from normal to high speed */
 	FIMC_IS_SCENARIO_SECURE = 6,
+	FIMC_IS_SCENAIRO_REMOSAIC = 7,
 };
 
 enum is_system_control_id {

@@ -107,6 +107,9 @@ struct max77705_usbc_platform_data {
 	u8 pd_status0;
 	u8 pd_status1;
 
+	/* opcode register information */
+	u8 op_ctrl1_w;
+
 	int watchdog_count;
 	int por_count;
 
@@ -128,6 +131,7 @@ struct max77705_usbc_platform_data {
 
 	struct work_struct op_wait_work;
 	struct work_struct op_send_work;
+	struct work_struct cc_open_req_work;
 	struct workqueue_struct	*op_wait_queue;
 	struct workqueue_struct	*op_send_queue;
 	struct completion op_completion;
@@ -186,6 +190,8 @@ struct max77705_usbc_platform_data {
 	int is_client;
 	bool auto_vbus_en;
 	u8 cc_pin_status;
+	int ccrp_state;
+	int vsafe0v_status;
 #endif
 #if defined(CONFIG_DUAL_ROLE_USB_INTF)
 	struct dual_role_phy_instance *dual_role;
@@ -233,6 +239,12 @@ struct max77705_usbc_platform_data {
 	int detach_done_wait;
 	int set_altmode;
 	int set_altmode_error;
+
+	u8 control3_reg;
+	int cc_open_req;
+	
+	bool recover_opcode_list[OPCODE_NONE];
+	int need_recover;
 };
 
 /* Function Status from s2mm005 definition */
@@ -296,6 +308,7 @@ extern void max77705_vbus_turn_on_ctrl(struct max77705_usbc_platform_data *usbc_
 extern void max77705_dp_detach(void *data);
 void max77705_usbc_disable_auto_vbus(struct max77705_usbc_platform_data *usbc_data);
 extern void max77705_set_host_turn_on_event(int mode);
+extern void pdic_manual_ccopen_request(int is_on);
 #if defined(CONFIG_TYPEC)
 int max77705_get_pd_support(struct max77705_usbc_platform_data *usbc_data);
 #endif

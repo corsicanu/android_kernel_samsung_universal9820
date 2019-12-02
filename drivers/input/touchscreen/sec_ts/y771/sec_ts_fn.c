@@ -5403,41 +5403,49 @@ NG:
 	sec_cmd_set_cmd_exit(sec);
 }
 
-static void set_temperature(void *device_data)
+int sec_ts_set_temp(struct sec_ts_data *ts)
 {
-	struct sec_cmd_data *sec = (struct sec_cmd_data *)device_data;
-	struct sec_ts_data *ts = container_of(sec, struct sec_ts_data, sec);
-	char buff[SEC_CMD_STR_LEN] = { 0 };
 	int ret = 0;
 	u8 temp_data = 0;
-
-	sec_cmd_set_default_result(sec);
-
-	if (sec->cmd_param[0] != 1)
-		goto NG;
 
 	if (!ts->psy)
 		ts->psy = power_supply_get_by_name("battery");
 
 	if (!ts->psy) {
 		input_err(true, &ts->client->dev, "%s: Cannot find power supply\n", __func__);
-		goto NG;
+		return -1;
 	}
 
 	ret = power_supply_get_property(ts->psy, POWER_SUPPLY_PROP_TEMP, &ts->psy_value);
 	if (ret < 0) {
 		input_err(true, &ts->client->dev, "%s: Couldn't get aicl settled value ret=%d\n", __func__, ret);
-		goto NG;
+		return ret;
 	}
 
 	temp_data = (u8)(ts->psy_value.intval / 10);
 	ret = ts->sec_ts_i2c_write(ts, SET_TS_CMD_SET_LOWTEMPERATURE_MODE, &temp_data, 1);
 	if (ret < 0) {
-		input_err(true, &ts->client->dev,
-		"%s: Failed to write\n", __func__);
-		goto NG;
+		input_err(true, &ts->client->dev, "%s: Failed to write\n", __func__);
+		return ret;
 	}
+
 	input_info(true, &ts->client->dev, "%s temperature:%d\n", __func__, (s8)temp_data);
+
+	return ret;
+}
+
+static void set_temperature(void *device_data)
+{
+	struct sec_cmd_data *sec = (struct sec_cmd_data *)device_data;
+	struct sec_ts_data *ts = container_of(sec, struct sec_ts_data, sec);
+	char buff[SEC_CMD_STR_LEN] = { 0 };
+	int ret = 0;
+
+	sec_cmd_set_default_result(sec);
+
+	ret = sec_ts_set_temp(ts);
+	if (ret < 0)
+		goto NG;
 	
 	snprintf(buff, sizeof(buff), "OK");
 	sec->cmd_state = SEC_CMD_STATUS_OK;
@@ -5708,11 +5716,13 @@ static void fod_enable(void *device_data)
 	else
 		ts->lowpower_mode &= ~SEC_TS_MODE_SPONGE_PRESS;
 
-	ts->press_prop = !!sec->cmd_param[1];
+	ts->press_prop = (sec->cmd_param[1] & 0x01) | ((sec->cmd_param[2] & 0x01) << 1);
 
-	input_info(true, &ts->client->dev, "%s: %s, fast:%d, %02X\n",
+	input_info(true, &ts->client->dev, "%s: %s, fast:%s, strict:%s, %02X\n",
 			__func__, sec->cmd_param[0] ? "on" : "off",
-			ts->press_prop, ts->lowpower_mode);
+			ts->press_prop & 1 ? "on" : "off",
+			ts->press_prop & 2 ? "on" : "off",
+			ts->lowpower_mode);
 
 	mutex_lock(&ts->modechange);
 	if (ts->input_closed && !ts->lowpower_mode && !ts->ed_enable) {

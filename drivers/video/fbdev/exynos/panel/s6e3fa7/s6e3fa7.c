@@ -361,6 +361,7 @@ err:
 	return ret;
 }
 
+#if 0
 void show_brt_step(struct brightness_table *brt_tbl)
 {
 	int i;
@@ -379,6 +380,7 @@ void show_brt_step(struct brightness_table *brt_tbl)
 	}
 	pr_info("%s %d %s\n", __func__, brt_tbl->sz_brt_to_step, buf);
 }
+#endif
 
 static int generate_brt_step_table(struct brightness_table *brt_tbl)
 {
@@ -939,7 +941,8 @@ static void copy_gamma_maptbl(struct maptbl *tbl, u8 *dst)
 	id = panel_bl->props.id;
 	brightness = panel_bl->props.brightness;
 
-	if (!is_hbm_brightness(panel_bl, brightness)) {
+	if (get_actual_brightness(panel_bl, brightness)
+			<= S6E3FA7_TARGET_LUMINANCE) {
 		copy_common_maptbl(tbl, dst);
 		return;
 	}
@@ -970,7 +973,8 @@ static void copy_aor_maptbl(struct maptbl *tbl, u8 *dst)
 	brightness = panel_bl->props.brightness;
 	brt_tbl = &panel_bl->subdev[id].brt_tbl;
 
-	if (is_hbm_brightness(panel_bl, brightness)) {
+	if (get_actual_brightness(panel_bl, brightness)
+			> S6E3FA7_TARGET_LUMINANCE) {
 		copy_common_maptbl(tbl, dst);
 		aor = dst[0] << 8 | dst[1];
 		panel_bl->props.aor_ratio = AOR_TO_RATIO(aor, brt_tbl->vtotal);
@@ -996,6 +1000,7 @@ static void copy_irc_maptbl(struct maptbl *tbl, u8 *dst)
 	struct panel_irc_info *irc_info;
 	struct panel_dimming_info *panel_dim_info;
 	int id, brightness, ret;
+	int size_ui_lum;
 
 	if (!tbl || !dst) {
 		pr_err("%s, invalid parameter (tbl %p, dst %p\n",
@@ -1010,8 +1015,12 @@ static void copy_irc_maptbl(struct maptbl *tbl, u8 *dst)
 	brt_tbl = &panel_bl->subdev[id].brt_tbl;
 	panel_dim_info = panel->panel_data.panel_dim_info[id];
 	irc_info = panel_dim_info->irc_info;
+	size_ui_lum = (brt_tbl->sz_panel_dim_ui_lum != 0) ?
+		brt_tbl->sz_panel_dim_ui_lum : brt_tbl->sz_ui_lum;
 
-	memcpy(irc_info->ref_tbl, &tbl->arr[(brt_tbl->sz_ui_lum - 1) * irc_info->total_len], irc_info->total_len);
+	memcpy(irc_info->ref_tbl,
+			&tbl->arr[(size_ui_lum - 1) * irc_info->total_len],
+			irc_info->total_len);
 	ret = panel_bl_irc_interpolation(panel_bl, id, irc_info);
 	if (ret < 0) {
 		pr_err("%s, invalid irc (ret %d)\n", __func__, ret);
@@ -1471,6 +1480,28 @@ static int getidx_lpm_table(struct maptbl *tbl)
 
 	return maptbl_index(tbl, layer, row, 0);
 }
+
+#ifdef CONFIG_DYNAMIC_FREQ
+static int getidx_dyn_ffc_table(struct maptbl *tbl)
+{
+	int row = 0;
+	struct df_status_info *status;
+	struct panel_device *panel = (struct panel_device *)tbl->pdata;
+
+	if (panel == NULL) {
+		panel_err("PANEL:ERR:%s:panel is null\n", __func__);
+		return -EINVAL;
+	}
+	status = &panel->df_status;
+
+	panel_info("[DYN_FREQ]INFO:%s:ffc idx: %d\n", __func__, status->ffc_df);
+
+	row = status->ffc_df;
+
+	return maptbl_index(tbl, 0, row, 0);
+}
+#endif
+
 
 static int getidx_lpm_dyn_vlin_table(struct maptbl *tbl)
 {
@@ -2247,27 +2278,14 @@ static void copy_afc_maptbl(struct maptbl *tbl, u8 *dst)
 #endif
 #endif /* CONFIG_EXYNOS_DECON_MDNIE_LITE */
 
-
-#ifdef CONFIG_LOGGING_BIGDATA_BUG
-static unsigned int g_rddpm = 0xff;
-static unsigned int g_rddsm = 0xff;
-
-unsigned int get_panel_bigdata(void)
-{
-	unsigned int val = 0;
-
-	val = (g_rddsm << 8) | g_rddpm;
-
-	return val;
-}
-#endif
-
-
 static void show_rddpm(struct dumpinfo *info)
 {
 	int ret;
 	struct resinfo *res = info->res;
 	u8 rddpm[S6E3FA7_RDDPM_LEN] = { 0, };
+#ifdef CONFIG_LOGGING_BIGDATA_BUG
+	extern unsigned int g_rddpm;
+#endif
 
 	if (!res || ARRAY_SIZE(rddpm) != res->dlen) {
 		pr_err("%s invalid resource\n", __func__);
@@ -2300,6 +2318,9 @@ static void show_rddsm(struct dumpinfo *info)
 	int ret;
 	struct resinfo *res = info->res;
 	u8 rddsm[S6E3FA7_RDDSM_LEN] = { 0, };
+#ifdef CONFIG_LOGGING_BIGDATA_BUG
+	extern unsigned int g_rddsm;
+#endif
 
 	if (!res || ARRAY_SIZE(rddsm) != res->dlen) {
 		pr_err("%s invalid resource\n", __func__);

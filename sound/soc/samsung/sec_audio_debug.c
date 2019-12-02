@@ -165,7 +165,7 @@ static void abox_debug_string_update_workfunc(struct work_struct *wk)
 
 		break;
 	case TYPE_ABOX_VSSERROR:
-		len += snprintf(p_debug_data->dbg_str_buf, DBG_STR_BUFF_SZ - len, "CP Crash");
+		len += snprintf(p_debug_data->dbg_str_buf, DBG_STR_BUFF_SZ - len, "VSSERROR");
 		break;
 	default:
 		pr_err("%s: unknown type %d\n", __func__, p_debug_data->debug_err_type);
@@ -189,6 +189,58 @@ void abox_debug_string_update(enum abox_debug_err_type type, void *addr)
 	queue_work(p_debug_data->debug_string_wq, &p_debug_data->debug_string_work);
 }
 EXPORT_SYMBOL_GPL(abox_debug_string_update);
+
+void adev_err(struct device *dev, const char *fmt, ...)
+{
+	va_list args;
+	char temp_buf[LOG_MSG_BUFF_SZ];
+
+	va_start(args, fmt);
+	vsnprintf(temp_buf, sizeof(temp_buf), fmt, args);
+	va_end(args);
+
+	dev_printk(KERN_ERR, dev, "%s", temp_buf);
+	sec_audio_log(3, dev, "%s", temp_buf);
+}
+
+void adev_warn(struct device *dev, const char *fmt, ...)
+{
+	va_list args;
+	char temp_buf[LOG_MSG_BUFF_SZ];
+
+	va_start(args, fmt);
+	vsnprintf(temp_buf, sizeof(temp_buf), fmt, args);
+	va_end(args);
+
+	dev_printk(KERN_WARNING, dev, "%s", temp_buf);
+	sec_audio_log(4, dev, "%s", temp_buf);
+}
+
+void adev_info(struct device *dev, const char *fmt, ...)
+{
+	va_list args;
+	char temp_buf[LOG_MSG_BUFF_SZ];
+
+	va_start(args, fmt);
+	vsnprintf(temp_buf, sizeof(temp_buf), fmt, args);
+	va_end(args);
+
+	dev_printk(KERN_INFO, dev, "%s", temp_buf);
+	sec_audio_log(6, dev, "%s", temp_buf);
+}
+
+void adev_dbg(struct device *dev, const char *fmt, ...)
+{
+	va_list args;
+	char temp_buf[LOG_MSG_BUFF_SZ];
+
+	va_start(args, fmt);
+	vsnprintf(temp_buf, sizeof(temp_buf), fmt, args);
+	va_end(args);
+
+	dev_printk(KERN_DEBUG, dev, "%s", temp_buf);
+	sec_audio_log(7, dev, "%s", temp_buf);
+}
 
 static int get_debug_buffer_switch(struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)

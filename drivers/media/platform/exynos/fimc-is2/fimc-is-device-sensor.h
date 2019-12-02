@@ -211,6 +211,8 @@ enum fimc_is_ex_mode {
 	EX_DUALFPS_960 = 3,
 	EX_DUALFPS_480 = 4,
 	EX_PDAF_OFF = 5,
+	EX_3DHDR = 6,
+	EX_PDSTAT_OFF = 7,
 };
 
 struct fimc_is_sensor_cfg {
@@ -424,6 +426,7 @@ struct fimc_is_device_sensor {
 	u32						sstream;
 	u32						num_buffers;
 	u32						ex_mode;
+	u32						ex_scenario;
 
 #ifdef ENABLE_INIT_AWB
 	/* backup AWB gains for use initial gain */

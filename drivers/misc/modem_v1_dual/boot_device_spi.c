@@ -44,7 +44,8 @@ int check_cp_status(unsigned int gpio_cp_status, unsigned int count)
 
 	while (1) {
 		val = gpio_get_value(gpio_cp_status);
-		mif_err("CP2AP_WAKEUP == %d (cnt %d)\n", val, cnt);
+		if (cnt % 50 == 0)
+			mif_err("CP2AP_WAKEUP == %d (cnt %d)\n", val, cnt);
 
 		if (val != 0) {
 			ret = 0;
@@ -329,8 +330,8 @@ static int modem_spi_boot_remove(struct spi_device *spi)
 }
 #ifdef CONFIG_OF
 static const struct of_device_id modem_boot_spi_dt_match[] = {
-	{ .compatible = "modem_boot_spi",
-	},
+	{ .compatible = "modem_boot_spi" },
+	{},
 };
 MODULE_DEVICE_TABLE(of, modem_boot_spi_dt_match);
 #endif

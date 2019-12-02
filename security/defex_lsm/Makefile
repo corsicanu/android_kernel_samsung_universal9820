@@ -5,7 +5,10 @@
 # Features to Enable
 PED_ENABLE=true
 SAFEPLACE_ENABLE=true
+ifneq ($(wildcard $(srctree)/$(src)/../../include/crypto/internal/rsa.h),)
+$(warning [DEFEX] INTEGRITY_ENABLE)
 INTEGRITY_ENABLE=true
+endif
 
 # caches to enable
 CACHES_ENABLE=true
@@ -49,14 +52,12 @@ ifneq (,$(filter userdebug eng, $(TARGET_BUILD_VARIANT)))
     EXTRA_CFLAGS += -DDEFEX_SYSFS_ENABLE
 endif
 
-ifeq ($(CONFIG_SEC_VTS_TEST), y)
+ifeq ($(SEC_BUILD_OPTION_VTS), true)
+$(warning [DEFEX] VTS true $(SEC_BUILD_OPTION_VTS))
 EXTRA_CFLAGS += -DDEFEX_PERMISSIVE_SP
 EXTRA_CFLAGS += -DDEFEX_PERMISSIVE_PED
-endif
-
-ifeq ($(CONFIG_SEC_FACTORY), y)
-EXTRA_CFLAGS += -DDEFEX_PERMISSIVE_SP
-EXTRA_CFLAGS += -DDEFEX_PERMISSIVE_PED
+else
+$(warning [DEFEX] VTS false $(SEC_BUILD_OPTION_VTS))
 endif
 
 ifneq ($(wildcard  $(srctree)/$(src)/pack_rules.c),)

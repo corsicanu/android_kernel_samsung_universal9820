@@ -35,8 +35,6 @@ DEFINE_DLOG(dlog_rmdir);
 #define MAX_EXT			(1 << 7)
 #define MAX_DEPTH		2
 
-#define SDFAT_SUPER_MAGIC       (0x5EC5DFA4UL)
-
 struct dlog_keyword {
 	struct hlist_node hlist;
 	const char *keyword;
@@ -96,8 +94,9 @@ static const char *extensions[] = {
 	"dotx",	"htm", "html", "hwdt", "hwp",
 	"hwpx",	"hwt", "memo", "pdf", "pot",
 	"potx",	"pps", "ppsx", "ppt", "pptm",
-	"pptx",	"rtf", "snb", "spd", "xls",
-	"xlsm", "xlsx", "xlt", "xltx", "xml",
+	"pptx",	"rtf", "sdoc", "snb", "spd",
+	"xls", "xlsm", "xlsx", "xlt", "xltx",
+	"xml",
 	NULL,
 };
 

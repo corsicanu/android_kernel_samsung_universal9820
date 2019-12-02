@@ -19,6 +19,7 @@
 #include <linux/vmalloc.h>
 #include <linux/mm.h>
 #include <linux/sched/clock.h>
+#include <linux/kmsg_dump.h>
 
 /* For compatibility */
 #include <linux/fslog.h>
@@ -37,13 +38,15 @@
 
 #ifdef CONFIG_PROC_FSLOG_LOWMEM
 #define FSLOG_BUFLEN_STLOG		(32 * 1024)
-#define FSLOG_BUFLEN_DLOG_EFS		(16 * 1024)
+#define FSLOG_BUFLEN_SELOG		(8 * 1024)
+#define FSLOG_BUFLEN_DLOG_EFS		(8 * 1024)
 #define FSLOG_BUFLEN_DLOG_RMDIR		(16 * 1024)
 #define FSLOG_BUFLEN_DLOG_ETC		(64 * 1024)
 #define FSLOG_BUFLEN_DLOG_MM		(128 * 1024)
 #else /* device has DRAM of high capacity */
 #define FSLOG_BUFLEN_STLOG		(32 * 1024)
-#define FSLOG_BUFLEN_DLOG_EFS		(16 * 1024)
+#define FSLOG_BUFLEN_SELOG		(8 * 1024)
+#define FSLOG_BUFLEN_DLOG_EFS		(8 * 1024)
 #define FSLOG_BUFLEN_DLOG_RMDIR		(16 * 1024)
 #define FSLOG_BUFLEN_DLOG_ETC		(192 * 1024)
 #define FSLOG_BUFLEN_DLOG_MM		(256 * 1024)
@@ -170,12 +173,14 @@ DEFINE_FSLOG_VARIABLE(dlog_efs, FSLOG_BUFLEN_DLOG_EFS);
 DEFINE_FSLOG_VARIABLE(dlog_etc, FSLOG_BUFLEN_DLOG_ETC);
 DEFINE_FSLOG_VARIABLE(dlog_rmdir, FSLOG_BUFLEN_DLOG_RMDIR);
 DEFINE_FSLOG_VARIABLE(stlog, FSLOG_BUFLEN_STLOG);
+DEFINE_FSLOG_VARIABLE(selog, FSLOG_BUFLEN_SELOG);
 
 DEFINE_FSLOG_OPERATION(dlog_mm);
 DEFINE_FSLOG_OPERATION(dlog_efs);
 DEFINE_FSLOG_OPERATION(dlog_etc);
 DEFINE_FSLOG_OPERATION(dlog_rmdir);
 DEFINE_FSLOG_OPERATION(stlog);
+DEFINE_FSLOG_OPERATION(selog);
 
 static const char FSLOG_VERSION_STR[] = "1.1.0\n";
 
@@ -209,6 +214,7 @@ DEFINE_FSLOG_CREATE(dlog_efs, dlog_efs, FSLOG_FILE_MODE_DLOG);
 DEFINE_FSLOG_CREATE(dlog_etc, dlog_etc, FSLOG_FILE_MODE_DLOG);
 DEFINE_FSLOG_CREATE(dlog_rmdir, dlog_rmdir, FSLOG_FILE_MODE_DLOG);
 DEFINE_FSLOG_CREATE(stlog, stlog, FSLOG_FILE_MODE_STLOG);
+DEFINE_FSLOG_CREATE(selog, selog, FSLOG_FILE_MODE_STLOG);
 
 static int __init fslog_init(void)
 {
@@ -221,6 +227,7 @@ static int __init fslog_init(void)
 	fslog_create_dlog_etc(fslog_dir);
 	fslog_create_dlog_rmdir(fslog_dir);
 	fslog_create_stlog(fslog_dir);
+	fslog_create_selog(fslog_dir);
 
 	/* To ensure sub-compatibility in versions below O OS */
 	proc_symlink("stlog", NULL, "/proc/fslog/stlog");
@@ -256,6 +263,25 @@ static u32 fslog_next(char *fslog_cbuf, u32 idx)
 	return idx + msg->len;
 }
 
+static inline void fslog_find_task_by_vpid(struct fslog_metadata *msg,
+						struct task_struct *owner)
+{
+	struct task_struct *p;
+
+	rcu_read_lock();
+	p = find_task_by_vpid(owner->tgid);
+	if (p) {
+		msg->tgid = owner->tgid;
+		memcpy(msg->tgid_comm, p->comm, TASK_COMM_LEN);
+		rcu_read_unlock();
+		return;
+	}
+	rcu_read_unlock();
+
+	msg->tgid = 0;
+	msg->tgid_comm[0] = 0;
+}
+
 static void fslog_buf_store(const char *text, u16 text_len,
 					struct fslog_data *fl_data,
 					struct task_struct *owner)
@@ -265,7 +291,6 @@ static void fslog_buf_store(const char *text, u16 text_len,
 	wait_queue_head_t *fslog_wait_queue = &(fl_data->fslog_wait_queue);
 	char *fslog_cbuf = fl_data->fslog_cbuf;
 	u32 size, pad_len, fslog_buf_len = fl_data->fslog_buf_len;
-	struct task_struct *p = find_task_by_vpid(owner->tgid);
 
 	/* number of '\0' padding bytes to next message */
 	size = sizeof(struct fslog_metadata) + text_len;
@@ -300,13 +325,7 @@ static void fslog_buf_store(const char *text, u16 text_len,
 	msg->text_len = text_len;
 	msg->pid = owner->pid;
 	memcpy(msg->comm, owner->comm, TASK_COMM_LEN);
-	if (p) {
-		msg->tgid = owner->tgid;
-		memcpy(msg->tgid_comm, p->comm, TASK_COMM_LEN);
-	} else {
-		msg->tgid = 0;
-		msg->tgid_comm[0] = 0;
-	}
+	fslog_find_task_by_vpid(msg, owner);
 	msg->ts_nsec = local_clock();
 	msg->len = sizeof(struct fslog_metadata) + text_len + pad_len;
 
@@ -619,3 +638,41 @@ DEFINE_FSLOG_FUNC(dlog_efs);
 DEFINE_FSLOG_FUNC(dlog_etc);
 DEFINE_FSLOG_FUNC(dlog_rmdir);
 DEFINE_FSLOG_FUNC(stlog);
+DEFINE_FSLOG_FUNC(selog);
+
+#define BUFSIZE 201
+/* print latest filtered kernel log with lines */
+int fslog_kmsg_selog(const char *filter, int lines) {
+	int r = 0, line = 0, remain = 0, cut = 0;
+	int skip = 0, cur = 0, prev = 0;
+	struct kmsg_dumper dumper = { .active = 1 };
+	char buf[BUFSIZE] = {0, };
+	char *ptr;
+	size_t len;
+
+	kmsg_dump_rewind_nolock(&dumper);
+	while (kmsg_dump_get_line_nolock(&dumper, 0, buf, sizeof(buf), &len)) {
+		if (strstr(buf, filter)) {
+			prev = cur;
+			cur = line;
+		}
+		line++;
+	}
+	skip = prev==0 ? prev : prev+1;
+
+	kmsg_dump_rewind_nolock(&dumper);
+	while (kmsg_dump_get_line_nolock(&dumper, 0, buf, sizeof(buf), &len)) {
+		if (skip-- > 0) 
+			continue;
+		ptr = strstr(buf, filter);
+		if (ptr) {
+			remain = lines;
+			cut = ((char *)ptr) - ((char *)buf);
+		}
+		if (remain-- > 0 && strchr(buf, '+'))
+			r = fslog(&fslog_data_selog, "%s", buf + cut);
+		memset(buf, 0, BUFSIZE);
+	}
+
+	return r;
+}

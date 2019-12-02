@@ -247,7 +247,18 @@ const struct v4l2_file_operations fimc_is_ssx_video_fops = {
 static int fimc_is_ssx_video_querycap(struct file *file, void *fh,
 					struct v4l2_capability *cap)
 {
-	/* Todo : add to query capability code */
+	struct fimc_is_video *video = video_drvdata(file);
+
+	FIMC_BUG(!cap);
+	FIMC_BUG(!video);
+
+	snprintf(cap->driver, sizeof(cap->driver), "%s", video->vd.name);
+	snprintf(cap->card, sizeof(cap->card), "%s", video->vd.name);
+	cap->capabilities |= V4L2_CAP_STREAMING
+			| V4L2_CAP_VIDEO_OUTPUT
+			| V4L2_CAP_VIDEO_OUTPUT_MPLANE;
+	cap->device_caps |= cap->capabilities;
+
 	return 0;
 }
 
@@ -664,13 +675,26 @@ static int fimc_is_ssx_video_s_ctrl(struct file *file, void *priv,
 	case V4L2_CID_IS_FACTORY_APERTURE_CONTROL:
 	case V4L2_CID_IS_OPENING_HINT:
 	case V4L2_CID_IS_CLOSING_HINT:
-	case V4L2_CID_IS_SECURE_MODE:
 		ret = fimc_is_video_s_ctrl(file, vctx, ctrl);
 		if (ret) {
 			merr("fimc_is_video_s_ctrl is fail(%d)", device, ret);
 			goto p_err;
 		}
 		break;
+	case V4L2_CID_IS_SECURE_MODE:
+	{
+		u32 scenario;
+		struct fimc_is_core *core;
+
+		scenario = (ctrl->value & FIMC_IS_SCENARIO_MASK) >> FIMC_IS_SCENARIO_SHIFT;
+		core = (struct fimc_is_core *)dev_get_drvdata(fimc_is_dev);
+		if (core && scenario == FIMC_IS_SCENARIO_SECURE) {
+			mvinfo("[SCENE_MODE] SECURE scenario(%d) was detected\n",
+				device, GET_VIDEO(vctx), scenario);
+			device->ex_scenario = core->scenario = scenario;
+		}
+		break;
+	}
 	case V4L2_CID_SENSOR_SET_GAIN:
 		if (fimc_is_sensor_s_again(device, ctrl->value)) {
 			err("failed to set gain : %d\n - %d",

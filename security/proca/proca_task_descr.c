@@ -34,6 +34,24 @@ struct proca_task_descr *create_proca_task_descr(struct task_struct *task,
 
 	PROCA_DEBUG_LOG("Task descriptor for task %d was created\n",
 			task->pid);
+	PROCA_DEBUG_LOG("Task %d has application name %s\n",
+			task->pid, ident->parsed_cert.app_name);
+
+	return task_descr;
+}
+
+struct proca_task_descr *create_unsigned_proca_task_descr(
+						struct task_struct *task)
+{
+	struct proca_task_descr *task_descr = kzalloc(sizeof(*task_descr),
+							GFP_KERNEL);
+	if (unlikely(!task_descr))
+		return NULL;
+
+	task_descr->task = task;
+
+	PROCA_DEBUG_LOG("Task descriptor for unsigned task %d was created\n",
+			task->pid);
 
 	return task_descr;
 }

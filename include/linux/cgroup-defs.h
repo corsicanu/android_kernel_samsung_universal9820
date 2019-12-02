@@ -523,7 +523,7 @@ struct cgroup_subsys {
 	void (*cancel_fork)(struct task_struct *task);
 	void (*fork)(struct task_struct *task);
 	void (*exit)(struct task_struct *task);
-	void (*free)(struct task_struct *task);
+	void (*release)(struct task_struct *task);
 	void (*bind)(struct cgroup_subsys_state *root_css);
 
 	bool early_init:1;
@@ -616,7 +616,6 @@ extern struct percpu_rw_semaphore cgroup_threadgroup_rwsem;
 static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk)
 {
 	percpu_down_read(&cgroup_threadgroup_rwsem);
-	sec_debug_snapshot_printkl((size_t)tsk, 4);
 }
 
 /**
@@ -628,7 +627,6 @@ static inline void cgroup_threadgroup_change_begin(struct task_struct *tsk)
 static inline void cgroup_threadgroup_change_end(struct task_struct *tsk)
 {
 	percpu_up_read(&cgroup_threadgroup_rwsem);
-	sec_debug_snapshot_printkl((size_t)tsk, 12);
 }
 
 #else	/* CONFIG_CGROUPS */
