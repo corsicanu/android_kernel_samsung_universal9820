@@ -103,7 +103,7 @@ void dbg_snapshot_hook_hardlockup_entry(void *v_regs)
 		update_hardlockup_type(cpu);
 #endif
 
-#ifdef CONFIG_SEC_DEBUG_EXTRA_INFO
+#if defined (CONFIG_SEC_DEBUG_EXTRA_INFO) && defined (CONFIG_SEC_DEBUG_TSP_LOG)
 		sec_debug_set_extra_info_backtrace_cpu(v_regs, cpu);
 #endif
 	}
@@ -287,8 +287,10 @@ static void dbg_snapshot_dump_one_task_info(struct task_struct *tsk, bool is_mai
 			task_cpu(tsk), wchan, pc, (unsigned long)tsk,
 			is_main ? '*' : ' ', tsk->comm, symname);
 
-	if (tsk->state == TASK_RUNNING || tsk->state == TASK_UNINTERRUPTIBLE || tsk->state == TASK_KILLABLE) {		
+	if (tsk->state == TASK_RUNNING || tsk->state == TASK_UNINTERRUPTIBLE || tsk->state == TASK_KILLABLE) {	
+#if defined (CONFIG_SEC_DEBUG_EXTRA_INFO) && defined (CONFIG_SEC_DEBUG_TSP_LOG)	
 		sec_debug_wtsk_print_info(tsk, true);
+#endif
 		show_stack(tsk, NULL);
 		pr_info("\n");
 	}
