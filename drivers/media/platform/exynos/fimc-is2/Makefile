@@ -94,3 +94,4 @@ subdir-ccflags-$(CONFIG_FIMC_IS_V7_0_0) += -Idrivers/media/platform/exynos/fimc-
 
 subdir-ccflags-$(CONFIG_VENDER_DEFAULT) += -Idrivers/media/platform/exynos/fimc-is2/vendor/default
 subdir-ccflags-$(CONFIG_VENDER_MCD) += -Idrivers/media/platform/exynos/fimc-is2/vendor/mcd
+subdir-ccflags-y += -Wno-sizeof-pointer-memaccess
