@@ -234,7 +234,9 @@ obj-$(CONFIG_UH)		+= uh/
 #	obj-$(CONFIG_GATOR)				+= gator/
 #endif
 
-obj-y				+= kperfmon/
+ifdef CONFIG_KPERFMON
+    obj-y				+= kperfmon/
+endif
 
 obj-$(CONFIG_SEC_EXT)		+= samsung/
 
