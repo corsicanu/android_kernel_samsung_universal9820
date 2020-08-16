@@ -1,5 +1,4 @@
 *.gen.S
-*.fw
 *.csp
 *.dsp
 ihex2fw
