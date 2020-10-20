@@ -121,3 +121,13 @@ all.config
 
 # Kdevelop4
 *.kdev4
+#
+# Misc build leftovers
+#
+*.dtb*
+*.tlbin
+*.symversions
+hK-out
+lib/libdss.c
+firmware/mfc/mfc_fw_flash.bin
+firmware/mfc/mfc_fw_flash_lsi.bin
