@@ -59,6 +59,15 @@ dtbo-y += samsung/exynos9820-d1_eur_open_23.dtbo
 dtbo-y += samsung/exynos9820-d1_eur_open_22.dtbo
 endif
 
+ifdef CONFIG_MODEL_D1X
+dtb-y += exynos/exynos9825.dtb
+dtbo-y += samsung/exynos9820-d1x_kor_21.dtbo
+dtbo-y += samsung/exynos9820-d1x_kor_22.dtbo
+dtbo-y += samsung/exynos9820-d1x_kor_18.dtbo
+dtbo-y += samsung/exynos9820-d1x_kor_19.dtbo
+dtbo-y += samsung/exynos9820-d1x_kor_23.dtbo
+endif
+
 ifdef CONFIG_MODEL_D2S
 dtb-y += exynos/exynos9825.dtb
 dtbo-y += samsung/exynos9820-d2_eur_open_20.dtbo
