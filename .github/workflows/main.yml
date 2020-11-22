@@ -1,0 +1,97 @@
+name: twrp prebuilts build process
+
+on:
+  push:
+    branches: [ android-9.0 ]
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Checkout kernel repo
+        uses: actions/checkout@v2
+        with:
+          ref: 'android-9.0'
+          fetch-depth: 25
+          token: ${{ secrets.TOKEN }}
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip tar
+
+      - name: Set up environment
+        id: toolchains
+        run: |
+          rm -rf hk-out
+          mkdir -p hk-out/zip hk-tools/clang-r353983c1 hk-tools/aarch64-linux-android && cd hk-tools && pwd
+          sudo curl -L http://de.corsicanu.ro/downloads/aarch64-linux-android.tar.gz | tar -xz -C aarch64-linux-android
+          sudo curl -L http://de.corsicanu.ro/downloads/clang-r353983c1.tar.gz | tar -xz -C clang-r353983c1
+          toolchains=$(pwd) && cd ..
+          echo ::set-output name=clang::"$toolchains/clang-r353983c1/bin"
+          echo ::set-output name=gcc::"$toolchains/aarch64-linux-android/bin/aarch64-linux-android-"
+
+      - name: Checkout configs repo
+        uses: actions/checkout@v2
+        with:
+          repository: corsicanu/random_scripts
+          token: ${{ secrets.TOKEN }}
+          path: hk-tools/random
+
+      - name: Build everything
+        run: |
+          jobs=8
+          export ARCH=arm64
+          export SUBARCH=arm64
+          export ANDROID_MAJOR_VERSION=q
+          export CLANG_PATH=${{ steps.toolchains.outputs.clang }}
+          export CLANG_TRIPLE=aarch64-linux-gnu-
+          export CROSS_COMPILE=${{ steps.toolchains.outputs.gcc }}
+          export PATH=${CLANG_PATH}:${PATH}
+          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx d1:d1 d2s:d2s d2x:d2x)
+          for i in ${combo[@]}; do
+            variant=`echo $i | cut -d':' -f2`
+            rm -rf .version
+            mkdir -p hk-out/$variant
+            unset LOCALVERSION
+            make CC=clang ARCH=arm64 exynos9820-`echo $i | cut -d':' -f1`_defconfig
+            make CC=clang ARCH=arm64 -j$jobs
+            cp -r arch/arm64/boot/Image hk-out/$variant/kernel
+            ./hk-tools/random/dt_tools/mkdtimg cfg_create hk-out/$variant/dtbo ./hk-tools/random/dt_tools/configs/$variant.cfg -d arch/arm64/boot/dts/samsung
+          done
+          
+      - name: Generate release file
+        id: files
+        run: |
+          basedir=$(pwd)
+          tag=$(date +'%Y%m%d%H%M%S')
+          date=$(date +'%d-%m-%Y')
+          cd hk-out && zip -r prebuilts.zip * && cd $basedir
+          echo ::set-output name=zip::`find -name prebuilts.zip`
+          echo ::set-output name=tag::$tag
+          echo ::set-output name=date::$date
+
+      - name: Update current version and create log
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git pull origin ${{github.ref}} --ff-only
+          git tag ${{ steps.files.outputs.tag }}
+
+      - name: Push changes to repo
+        uses: ad-m/github-push-action@master
+        with:
+          tags: true
+          github_token: ${{ secrets.TOKEN }}
+          branch: ${{github.ref}}
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        with:
+          tag_name: ${{ steps.files.outputs.tag }}
+          name: Prebuilts of ${{ steps.files.outputs.date }}
+          files: |
+            ${{ steps.files.outputs.zip }}
