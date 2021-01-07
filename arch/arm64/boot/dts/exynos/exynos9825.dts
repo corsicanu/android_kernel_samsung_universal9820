@@ -1,4 +1,15 @@
 /dts-v1/;
+// magic:		0xd00dfeed
+// totalsize:		0x3a81c (239644)
+// off_dt_struct:	0x38
+// off_dt_strings:	0x35ebc
+// off_mem_rsvmap:	0x28
+// version:		17
+// last_comp_version:	16
+// boot_cpuid_phys:	0x
+// size_dt_strings:	0x4960
+// size_dt_struct:	0x35e84
+
 / {
 	compatible = "samsung,armv8", "samsung,exynos9825";
 	dtb-hw_rev = <0x0>;
@@ -8741,7 +8752,7 @@
 			emc_mode_2 {
 				mode_name = "SINGLE";
 				cpus = "0-3,6";
-				boost_cpus = [36 00];
+				boost_cpus = "6";
 				cal-id = <0xb040004>;
 				max_freq = <0x29a810>;
 				change_latency = <0x1e>;
