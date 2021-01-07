@@ -32,7 +32,6 @@ static struct device_attribute max77705_fg_attrs[] = {
 };
 
 #if !defined(CONFIG_SEC_FACTORY)
-#if !defined(CONFIG_INPUT_WACOM)
 static void max77705_fg_adaptation_wa(struct max77705_fuelgauge_data *fuelgauge)
 {
 	u32 rcomp0;
@@ -96,7 +95,6 @@ re_calculation:
 
 	return;
 }
-#endif
 
 static void max77705_fg_periodic_read(struct max77705_fuelgauge_data *fuelgauge)
 {
@@ -135,9 +133,7 @@ static void max77705_fg_periodic_read(struct max77705_fuelgauge_data *fuelgauge)
 
 	pr_info("[FG] %s\n", str);
 
-#if !defined(CONFIG_INPUT_WACOM)
 	max77705_fg_adaptation_wa(fuelgauge);
-#endif
 
 	kfree(str);
 }
@@ -2259,7 +2255,6 @@ static int max77705_fuelgauge_parse_dt(struct max77705_fuelgauge_data *fuelgauge
 			pr_err("%s: error reading capacity_calculation_type %d\n",
 				__func__, ret);
 
-#if !defined(CONFIG_INPUT_WACOM)
 		len = of_property_count_u32_elems(np, "fuelgauge,fg_reset_wa_data");
 
 		if (len != FG_RESET_DATA_COUNT) {
@@ -2277,7 +2272,6 @@ static int max77705_fuelgauge_parse_dt(struct max77705_fuelgauge_data *fuelgauge
 				fuelgauge->fg_reset_data = NULL;
 			}
 		}
-#endif
 
 
 		fuelgauge->auto_discharge_en = of_property_read_bool(np,

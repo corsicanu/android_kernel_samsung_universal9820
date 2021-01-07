@@ -126,9 +126,6 @@ struct battery_data_t {
 	u32 sw_v_empty_recover_vol;
 	u32 QResidual20;
 	u32 QResidual30;
-#if defined(CONFIG_INPUT_WACOM)
-	u32 TempCo;
-#endif
 	u32 Capacity;
 	u8  *type_str;
 	u32 ichgterm;
@@ -162,7 +159,6 @@ struct cv_slope {
 	int time;
 };
 
-#if !defined(CONFIG_INPUT_WACOM)
 #define FG_RESET_DATA_COUNT		5
 
 struct fg_reset_wa {
@@ -172,7 +168,6 @@ struct fg_reset_wa {
 	u32 rcomp0;
 	u32 tempco;
 };
-#endif
 
 struct max77705_fuelgauge_data {
 	struct device           *dev;
@@ -235,9 +230,7 @@ struct max77705_fuelgauge_data {
 
 	u32 fg_resistor;
 
-#if !defined(CONFIG_INPUT_WACOM)
 	struct fg_reset_wa *fg_reset_data;
-#endif
 
 #if defined(CONFIG_BATTERY_CISD)
 	bool valert_count_flag;
