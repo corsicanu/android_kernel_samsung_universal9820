@@ -25,11 +25,11 @@ jobs:
         id: toolchains
         run: |
           rm -rf hk-out
-          mkdir -p hk-out hk-tools/clang-r353983c1 hk-tools/aarch64-linux-android && cd hk-tools && pwd
+          mkdir -p hk-out hk-tools/clang-r383902b hk-tools/aarch64-linux-android && cd hk-tools && pwd
           sudo curl -L http://de.corsicanu.ro/downloads/aarch64-linux-android.tar.gz | tar -xz -C aarch64-linux-android
-          sudo curl -L http://de.corsicanu.ro/downloads/clang-r353983c1.tar.gz | tar -xz -C clang-r353983c1
+          sudo curl -L http://de.corsicanu.ro/downloads/clang-r383902b.tar.gz | tar -xz -C clang-r383902b
           toolchains=$(pwd) && cd ..
-          echo ::set-output name=clang::"$toolchains/clang-r353983c1/bin"
+          echo ::set-output name=clang::"$toolchains/clang-r383902b/bin"
           echo ::set-output name=gcc::"$toolchains/aarch64-linux-android/bin/aarch64-linux-android-"
 
       - name: Checkout configs repo
@@ -44,12 +44,13 @@ jobs:
           jobs=8
           export ARCH=arm64
           export SUBARCH=arm64
-          export ANDROID_MAJOR_VERSION=q
+          export ANDROID_MAJOR_VERSION=r
+          export PLATFORM_VERSION=11
           export CLANG_PATH=${{ steps.toolchains.outputs.clang }}
           export CLANG_TRIPLE=aarch64-linux-gnu-
           export CROSS_COMPILE=${{ steps.toolchains.outputs.gcc }}
           export PATH=${CLANG_PATH}:${PATH}
-          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx d1:d1 d2s:d2s d2x:d2x d1xks:d1x)
+          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx d1:d1 d2s:d2s d2x:d2x)
           for i in ${combo[@]}; do
             variant=`echo $i | cut -d':' -f2`
             rm -rf .version
