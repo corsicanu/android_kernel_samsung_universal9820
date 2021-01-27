@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Copyright (C) 2019 Samsung Electronics.
  *
  * This software is licensed under the terms of the GNU General Public
