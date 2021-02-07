@@ -7,6 +7,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-18.04
+    if: "!contains(github.event.head_commit.message, '[ci skip]')"
 
     steps:
       - name: Checkout kernel repo
@@ -28,19 +29,20 @@ jobs:
           sudo curl -L http://de.corsicanu.ro/downloads/aarch64-linux-android.tar.gz | tar -xz -C aarch64-linux-android
           sudo curl -L http://de.corsicanu.ro/downloads/clang-r383902b.tar.gz | tar -xz -C clang-r383902b
           toolchains=$(pwd) && cd ..
+          sudo wget -O /usr/bin/mkdtimg http://de.corsicanu.ro/downloads/mkdtimg && sudo chmod +x /usr/bin/mkdtimg
           echo ::set-output name=clang::"$toolchains/clang-r383902b/bin"
           echo ::set-output name=gcc::"$toolchains/aarch64-linux-android/bin/aarch64-linux-android-"
 
       - name: Checkout configs repo
         uses: actions/checkout@v2
         with:
-          repository: corsicanu/random_scripts
+          repository: corsicanu/dtconfigs
           token: ${{ secrets.TOKEN }}
-          path: hk-tools/random
+          path: hk-out/dtconfigs
 
       - name: Build everything
         run: |
-          jobs=8
+          jobs=16
           export ARCH=arm64
           export SUBARCH=arm64
           export ANDROID_MAJOR_VERSION=r
@@ -58,7 +60,7 @@ jobs:
             make CC=clang ARCH=arm64 exynos9820-`echo $i | cut -d':' -f1`_defconfig
             make CC=clang ARCH=arm64 -j$jobs
             cp -r arch/arm64/boot/Image hk-out/$variant/kernel
-            ./hk-tools/random/dt_tools/mkdtimg cfg_create hk-out/$variant/dtbo ./hk-tools/random/dt_tools/configs/$variant.cfg -d arch/arm64/boot/dts/samsung
+            mkdtimg cfg_create hk-out/$variant/dtbo hk-out/dtconfigs/$variant.cfg -d arch/arm64/boot/dts/samsung
           done
           
       - name: Generate release file
