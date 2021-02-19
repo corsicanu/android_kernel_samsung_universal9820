@@ -62,6 +62,7 @@ jobs:
             cp -r arch/arm64/boot/Image hk-out/$variant/kernel
             mkdtimg cfg_create hk-out/$variant/dtbo hk-out/dtconfigs/$variant.cfg -d arch/arm64/boot/dts/samsung
           done
+          rm -rf hk-out/dtconfigs
           
       - name: Generate release file
         id: files
