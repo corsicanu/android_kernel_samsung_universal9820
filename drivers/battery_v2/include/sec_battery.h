@@ -199,7 +199,11 @@ struct sec_bat_pdic_info {
 };
 
 struct sec_bat_pdic_list {
+#if defined(CONFIG_INPUT_WACOM)
 	struct sec_bat_pdic_info pd_info[MAX_PDO_NUM]; /* 5V ~ 12V */
+#else
+	struct sec_bat_pdic_info pd_info[8]; /* 5V ~ 12V */
+#endif
 	unsigned int now_pd_index;
 	unsigned int max_pd_count;
 #if defined(CONFIG_PDIC_PD30)
