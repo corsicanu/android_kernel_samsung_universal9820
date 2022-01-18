@@ -25,12 +25,12 @@ jobs:
         id: toolchains
         run: |
           rm -rf hk-out
-          mkdir -p hk-out hk-tools/clang-r383902b hk-tools/aarch64-linux-android && cd hk-tools && pwd
-          sudo curl -L https://wbn.ro/gcc4.9 | tar -xz -C aarch64-linux-android
-          sudo curl -L https://wbn.ro/clang-r383902b | tar -xz -C clang-r383902b
+          mkdir -p hk-out hk-tools/clang-twrp hk-tools/aarch64-linux-android && cd hk-tools && pwd
+          sudo curl -L https://corsica.nu/gcc4.9 | tar -xz -C aarch64-linux-android
+          sudo curl -L https://corsica.nu/clang-twrp | tar -xz -C clang-twrp
           toolchains=$(pwd) && cd ..
-          sudo wget -O /usr/bin/mkdtimg https://wbn.ro/mkdtimg && sudo chmod +x /usr/bin/mkdtimg
-          echo ::set-output name=clang::"$toolchains/clang-r383902b/bin"
+          sudo wget -O /usr/bin/mkdtimg https://corsica.nu/mkdtimg && sudo chmod +x /usr/bin/mkdtimg
+          echo ::set-output name=clang::"$toolchains/clang-twrp/bin"
           echo ::set-output name=gcc::"$toolchains/aarch64-linux-android/bin/aarch64-linux-android-"
 
       - name: Checkout configs repo
