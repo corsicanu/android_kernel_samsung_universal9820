@@ -241,7 +241,7 @@ endif
 obj-$(CONFIG_SEC_EXT)		+= samsung/
 
 #TZIC
-obj-y  += security/samsung/tzic/
+obj-$(CONFIG_TZIC)   += security/samsung/tzic/
 
 # SPU signature verify
 obj-$(CONFIG_SPU_VERIFY) += spu_verify/
