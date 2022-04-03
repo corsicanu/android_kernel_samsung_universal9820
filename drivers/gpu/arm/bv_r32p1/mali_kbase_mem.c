@@ -388,9 +388,9 @@ void kbase_remove_va_region(struct kbase_device *kbdev,
 
 			WARN_ON((prev->flags & KBASE_REG_ZONE_MASK) !=
 					    (reg->flags & KBASE_REG_ZONE_MASK));
-			prev->nr_pages += reg->nr_pages;
 			if (!WARN_ON(reg->start_pfn < prev_end_pfn))
 				prev->nr_pages += reg->start_pfn - prev_end_pfn;
+			prev->nr_pages += reg->nr_pages;
 			rb_erase(&(reg->rblink), reg_rbtree);
 			reg = prev;
 			merged_front = 1;

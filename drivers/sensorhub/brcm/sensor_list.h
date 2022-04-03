@@ -153,5 +153,4 @@ struct sensor_info {
 #define SENSOR_INFO_POCKET_MODE			{"pocket_mode", POCKET_MODE_SENSOR, true, REPORT_MODE_ON_CHANGE, 26, 26}
 #define SENSOR_INFO_LED_COVER_EVENT			{"led_cover_event", LED_COVER_EVENT_SENSOR, true, REPORT_MODE_ON_CHANGE, 1, 1}
 #define SENSOR_INFO_AUTO_ROTATION			{"autorotation", AUTO_ROTATION_SENSOR, true, REPORT_MODE_ON_CHANGE, 1, 1}
-
 #endif

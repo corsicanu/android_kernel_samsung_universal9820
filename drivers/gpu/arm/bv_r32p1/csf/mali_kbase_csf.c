@@ -1183,7 +1183,7 @@ static int create_protected_suspend_buffer(struct kbase_device *const kbdev,
 
 mmu_insert_failed:
 	mutex_lock(&kbdev->csf.reg_lock);
-	kbase_remove_va_region(kctx->kbdev, reg);
+	kbase_remove_va_region(kbdev, reg);
 	mutex_unlock(&kbdev->csf.reg_lock);
 
 add_va_region_failed:
