@@ -51,7 +51,7 @@ jobs:
           export CLANG_TRIPLE=aarch64-linux-gnu-
           export CROSS_COMPILE=${{ steps.toolchains.outputs.gcc }}
           export PATH=${CLANG_PATH}:${PATH}
-          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx d1:d1 d2s:d2s d2x:d2x d1xks:d1x)
+          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx)
           for i in ${combo[@]}; do
             variant=`echo $i | cut -d':' -f2`
             rm -rf .version
