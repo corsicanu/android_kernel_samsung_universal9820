@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout kernel repo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: 'android-9.0'
           token: ${{ secrets.TOKEN }}
@@ -30,8 +30,8 @@ jobs:
           sudo curl -L https://corsica.nu/clang-twrp | tar -xz -C clang-twrp
           toolchains=$(pwd) && cd ..
           sudo wget -O /usr/bin/mkdtimg https://corsica.nu/mkdtimg && sudo chmod +x /usr/bin/mkdtimg
-          echo ::set-output name=clang::"$toolchains/clang-twrp/bin"
-          echo ::set-output name=gcc::"$toolchains/aarch64-linux-android/bin/aarch64-linux-android-"
+          echo "clang=$toolchains/clang-twrp/bin" >> $GITHUB_ENV
+          echo "gcc=$toolchains/aarch64-linux-android/bin/aarch64-linux-android-" >> $GITHUB_ENV
 
       - name: Checkout configs repo
         uses: actions/checkout@v2
@@ -47,9 +47,9 @@ jobs:
           export SUBARCH=arm64
           export ANDROID_MAJOR_VERSION=r
           export PLATFORM_VERSION=11
-          export CLANG_PATH=${{ steps.toolchains.outputs.clang }}
+          export CLANG_PATH=${{ env.clang }}
           export CLANG_TRIPLE=aarch64-linux-gnu-
-          export CROSS_COMPILE=${{ steps.toolchains.outputs.gcc }}
+          export CROSS_COMPILE=${{ env.gcc }}
           export PATH=${CLANG_PATH}:${PATH}
           combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx)
           for i in ${combo[@]}; do
@@ -71,16 +71,16 @@ jobs:
           tag=$(date +'%Y%m%d%H%M%S')
           date=$(date +'%d-%m-%Y')
           cd hk-out && zip -r prebuilts.zip * && cd $basedir
-          echo ::set-output name=zip::`find -name prebuilts.zip`
-          echo ::set-output name=tag::$tag
-          echo ::set-output name=date::$date
+          echo "zip=`find -name prebuilts.zip`" >> $GITHUB_ENV
+          echo "tag=$tag" >> $GITHUB_ENV
+          echo "date=$date" >> $GITHUB_ENV
 
       - name: Update current version and create log
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git pull origin ${{github.ref}} --ff-only
-          git tag ${{ steps.files.outputs.tag }}
+          git tag ${{ env.tag }}
 
       - name: Push changes to repo
         uses: ad-m/github-push-action@master
@@ -90,11 +90,11 @@ jobs:
           branch: ${{github.ref}}
 
       - name: Upload release assets
-        uses: softprops/action-gh-release@v1
+        uses: CaptainThrowback/action-gh-release@master
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         with:
-          tag_name: ${{ steps.files.outputs.tag }}
-          name: Prebuilts of ${{ steps.files.outputs.date }}
+          tag_name: ${{ env.tag }}
+          name: Prebuilts of ${{ env.date }}
           files: |
-            ${{ steps.files.outputs.zip }}
+            ${{ env.zip }}
