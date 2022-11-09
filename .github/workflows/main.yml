@@ -2,7 +2,7 @@ name: twrp prebuilts build process
 
 on:
   push:
-    branches: [ android-9.0 ]
+    branches: [ android-9.0-9825 ]
 
 jobs:
   build:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout kernel repo
         uses: actions/checkout@v3
         with:
-          ref: 'android-9.0'
+          ref: 'android-9.0-9825'
           token: ${{ secrets.TOKEN }}
 
       - name: Install dependencies
@@ -51,7 +51,7 @@ jobs:
           export CLANG_TRIPLE=aarch64-linux-gnu-
           export CROSS_COMPILE=${{ env.gcc }}
           export PATH=${CLANG_PATH}:${PATH}
-          combo=(beyond0lte:beyond0 beyond1lte:beyond1 beyond2lte:beyond2 beyondx:beyondx d1:d1 d2s:d2s d2x:d2x d1xks:d1x)
+          combo=(d1:d1 d2s:d2s d2x:d2x)
           for i in ${combo[@]}; do
             variant=`echo $i | cut -d':' -f2`
             rm -rf .version
